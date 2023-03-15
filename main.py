@@ -5,5 +5,8 @@ import requests
 import random
 
 page = requests.get('http://quotes.toscrape.com/')
-print(bs(page.content))
+soup = bs(page.content, 'html.parser')
 
+quotes = [i.text for i in soup.find_all(class_ = 'text')]
+authors = [i.text for i in soup.find_all(class_='author')]
+print(authors[0]);
