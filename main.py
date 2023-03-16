@@ -1,8 +1,7 @@
 from bs4 import BeautifulSoup as bs
 import pandas as pd
-import time
 import requests
-import random
+import boto3
 
 def get_column_names(table) -> list:
   columnsElements = table.find('thead').find_all('th')
@@ -18,11 +17,29 @@ def get_column_names(table) -> list:
 
 def get_rows(table) -> list:
   rows: list = []
-  for i, row in enumerate(table.find_all('tr')):
-    if i != 0:
-        rows.append([el.text.strip() for el in row.find_all('td')])
+  rowsToRemove = []
+  for i, row in enumerate(table.find_all('tr', {'class': 'c-table__row--data'})):
+    rowsToRemove.append([el.text.strip() for el in row.find_all('td')])
+
+  for i, row in enumerate(table.find_all('tr', {'class': 'c-table__row'})):
+    rows.append([el.text.strip() for el in row.find_all('td')])
+
+  for rowToRemove in rowsToRemove:
+    if rowToRemove in rows:
+      rows.remove(rowToRemove)
 
   return rows
+
+
+def arrange_data(headers, rows):
+  data = []
+  for row in rows:
+    rowData = {}
+    for i, header in enumerate(headers):
+      rowData[header] = row[i]
+    data.append(rowData)
+
+  return data
 
 
 def main():
@@ -32,6 +49,14 @@ def main():
 
   columns: list = get_column_names(table);
   rows: list = get_rows(table);
+
+  data = arrange_data(columns, rows)
+  print(data[0]['Institution'])
+
+  # dynamodb = boto3.resource('dynamodb')
+
+  # table = dynamodb.Table('university-table')
+  # print(table.creation_date_time)
 
 
 if __name__ == "__main__":
