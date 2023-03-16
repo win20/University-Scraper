@@ -21,8 +21,6 @@ def get_rows(table):
     if i != 0:
         rows.append([el.text.strip() for el in row.find_all('td')])
 
-  print(rows[0][0])
-
 def main():
   page = requests.get('https://www.theguardian.com/education/ng-interactive/2022/sep/24/the-guardian-university-guide-2023-the-rankings')
   soup = bs(page.content, 'html.parser')
