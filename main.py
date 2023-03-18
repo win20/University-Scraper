@@ -43,11 +43,11 @@ def arrange_data(headers, rows):
   return data
 
 
-def create_and_add_uuid(data) -> list:
+def add_ids(data: list) -> list:
   data_with_ids = []
 
-  for row in data:
-    item_to_add = { 'id': str(uuid.uuid4()) }
+  for idx, row in enumerate(data):
+    item_to_add = { 'id': str(idx) }
     item_to_add.update(row)
     data_with_ids.append(item_to_add)
 
@@ -63,10 +63,11 @@ def main():
   rows: list = get_rows(table);
 
   data = arrange_data(columns, rows)
-  data = create_and_add_uuid(data)
+  data = add_ids(data)
 
   dynamodb = boto3.resource('dynamodb')
   table = dynamodb.Table('university-table')
+
   for item in data:
     table.put_item(Item=item)
 
