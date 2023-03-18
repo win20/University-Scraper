@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup as bs
 import pandas as pd
 import requests
 import boto3
+import uuid
 
 def get_column_names(table) -> list:
   columnsElements = table.find('thead').find_all('th')
@@ -42,6 +43,17 @@ def arrange_data(headers, rows):
   return data
 
 
+def create_and_add_uuid(data) -> list:
+  data_with_ids = []
+
+  for row in data:
+    item_to_add = { 'id': str(uuid.uuid4()) }
+    item_to_add.update(row)
+    data_with_ids.append(item_to_add)
+
+  return data_with_ids
+
+
 def main():
   page = requests.get('https://www.theguardian.com/education/ng-interactive/2022/sep/24/the-guardian-university-guide-2023-the-rankings')
   soup = bs(page.content, 'html.parser')
@@ -51,12 +63,12 @@ def main():
   rows: list = get_rows(table);
 
   data = arrange_data(columns, rows)
-  print(data[0]['Institution'])
+  data = create_and_add_uuid(data)
 
-  # dynamodb = boto3.resource('dynamodb')
-
-  # table = dynamodb.Table('university-table')
-  # print(table.creation_date_time)
+  dynamodb = boto3.resource('dynamodb')
+  table = dynamodb.Table('university-table')
+  for item in data:
+    table.put_item(Item=item)
 
 
 if __name__ == "__main__":
