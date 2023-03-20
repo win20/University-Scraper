@@ -1,8 +1,8 @@
 from bs4 import BeautifulSoup as bs
-import pandas as pd
 import requests
 import boto3
-import uuid
+import re
+
 
 def get_column_names(table) -> list:
   columnsElements = table.find('thead').find_all('th')
@@ -13,7 +13,7 @@ def get_column_names(table) -> list:
 
   columns[-1] = columns[-1].replace('-', '')
 
-  return columns;
+  return columns
 
 
 def get_rows(table) -> list:
@@ -54,6 +54,34 @@ def add_ids(data: list) -> list:
   return data_with_ids
 
 
+def get_links(table) -> list:
+  links = []
+  for row in table.find_all('a', {'class': 'js-institution-link'}):
+    links.append(row.get('href'))
+
+  return links
+
+
+def scrape_uni_website_links(links):
+  university_links = []
+  for i, link in enumerate(links):
+    if link != '':
+      page = requests.get(link)
+      soup = bs(page.content, 'html.parser')
+
+      link_sibling_elements = soup.find('strong', string=re.compile('[W|w]eb.*'))
+      try:
+        if (link_sibling_elements != None):
+          university_links.append(link_sibling_elements.find_next('a').get('href'))
+        else:
+          link_alternate = soup.find('a', href=re.compile('.*ac.uk[^@]')).get('href')
+          university_links.append(link_alternate)
+      except:
+        print('ERROR')
+
+  return university_links
+
+
 def main():
   page = requests.get('https://www.theguardian.com/education/ng-interactive/2022/sep/24/the-guardian-university-guide-2023-the-rankings')
   soup = bs(page.content, 'html.parser')
@@ -65,11 +93,19 @@ def main():
   data = arrange_data(columns, rows)
   data = add_ids(data)
 
-  dynamodb = boto3.resource('dynamodb')
-  table = dynamodb.Table('university-table')
+  universityPages = get_links(table)
+  universityLinks = scrape_uni_website_links(universityPages)
 
-  for item in data:
-    table.put_item(Item=item)
+  # for link in universityLinks:
+  #   print(link)
+
+  # print(universityLinks[0])
+
+  # dynamodb = boto3.resource('dynamodb')
+  # table = dynamodb.Table('university-table')
+
+  # for item in data:
+  #   table.put_item(Item=item)
 
 
 if __name__ == "__main__":
