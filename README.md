@@ -1,1 +1,1 @@
-# University-Scraper
+# University Scraper
