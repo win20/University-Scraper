@@ -122,31 +122,33 @@ def add_university_website(data: list, university_links: list) -> list:
 
 
 def main():
+  # Get data
+  print('Collecting data...')
   page = requests.get('https://www.theguardian.com/education/ng-interactive/2022/sep/24/the-guardian-university-guide-2023-the-rankings')
   soup = bs(page.content, 'html.parser')
   table = soup.select('table.c-table')[0]
-
   columns: list = get_column_names(table);
   rows: list = get_rows(table);
 
+  # Arrange data and add extra info
   data = arrange_data(columns, rows)
   data = add_ids(data)
 
+  print('Adding university website links...')
   universityPages = get_links(table)
   universityLinks = scrape_uni_website_links(universityPages)
 
   final_data = add_university_website(data, universityLinks)
 
-  # for link in universityLinks:
-  #   print(link)
+  # Add data to DynamoDB
+  print('Add data to DynamoDB...')
+  dynamodb = boto3.resource('dynamodb')
+  table = dynamodb.Table('university-table')
 
-  # print(universityLinks[0])
+  for item in final_data:
+    table.put_item(Item=item)
 
-  # dynamodb = boto3.resource('dynamodb')
-  # table = dynamodb.Table('university-table')
-
-  # for item in data:
-  #   table.put_item(Item=item)
+  print('Complete.')
 
 
 if __name__ == "__main__":
