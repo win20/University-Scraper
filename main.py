@@ -5,6 +5,10 @@ import re
 
 
 def get_column_names(table) -> list:
+  '''
+    Looks through table headers.
+    Returns a list of all column headings.
+  '''
   columnsElements = table.find('thead').find_all('th')
 
   columns: list = []
@@ -17,12 +21,16 @@ def get_column_names(table) -> list:
 
 
 def get_rows(table) -> list:
+  '''
+    Looks through table rows.
+    Returns a list of all rows.
+  '''
   rows: list = []
   rowsToRemove = []
-  for i, row in enumerate(table.find_all('tr', {'class': 'c-table__row--data'})):
+  for row in table.find_all('tr', {'class': 'c-table__row--data'}):
     rowsToRemove.append([el.text.strip() for el in row.find_all('td')])
 
-  for i, row in enumerate(table.find_all('tr', {'class': 'c-table__row'})):
+  for row in table.find_all('tr', {'class': 'c-table__row'}):
     rows.append([el.text.strip() for el in row.find_all('td')])
 
   for rowToRemove in rowsToRemove:
@@ -32,7 +40,11 @@ def get_rows(table) -> list:
   return rows
 
 
-def arrange_data(headers, rows):
+def arrange_data(headers, rows) -> list:
+  '''
+    Create list of dictionaries, eg: [{ 'institution' : 'Oxford', 'ranking': 2, ...}, ...]
+    Returns list of dictionaries.
+  '''
   data = []
   for row in rows:
     rowData = {}
@@ -44,6 +56,10 @@ def arrange_data(headers, rows):
 
 
 def add_ids(data: list) -> list:
+  '''
+    Add IDs to each dictionary in the list.
+    Returns list of dictionaries.
+  '''
   data_with_ids = []
 
   for idx, row in enumerate(data):
@@ -55,6 +71,10 @@ def add_ids(data: list) -> list:
 
 
 def get_links(table) -> list:
+  '''
+    Looks through table and collects links to each university page in The Guardian.
+    Returns list of links
+  '''
   links = []
   for row in table.find_all('a', {'class': 'js-institution-link'}):
     links.append(row.get('href'))
@@ -62,9 +82,13 @@ def get_links(table) -> list:
   return links
 
 
-def scrape_uni_website_links(links):
+def scrape_uni_website_links(links) -> list:
+  '''
+    Goes through each link and finds the university website on that page.
+    Returns list of university website links
+  '''
   university_links = []
-  for i, link in enumerate(links):
+  for link in links:
     if link != '':
       page = requests.get(link)
       soup = bs(page.content, 'html.parser')
