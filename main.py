@@ -102,8 +102,23 @@ def scrape_uni_website_links(links) -> list:
           university_links.append(link_alternate)
       except:
         print('ERROR')
+    else:
+      university_links.append('/')
 
   return university_links
+
+
+def add_university_website(data: list, university_links: list) -> list:
+  final_data = []
+  for idx, row in enumerate(data):
+    try:
+      item_to_add = {'website': university_links[idx]}
+      row.update(item_to_add)
+      final_data.append(row)
+    except:
+      print('ERROR: ' + str(idx))
+
+  return final_data
 
 
 def main():
@@ -119,6 +134,8 @@ def main():
 
   universityPages = get_links(table)
   universityLinks = scrape_uni_website_links(universityPages)
+
+  final_data = add_university_website(data, universityLinks)
 
   # for link in universityLinks:
   #   print(link)
